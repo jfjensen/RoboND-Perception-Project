@@ -6,8 +6,12 @@ import sklearn
 from sklearn.preprocessing import LabelEncoder
 import pickle
 from sensor_stick.srv import GetNormals
-from sensor_stick.features import compute_color_histograms
-from sensor_stick.features import compute_normal_histograms
+# from sensor_stick.features import compute_color_histograms
+# from sensor_stick.features import compute_normal_histograms
+
+from features import compute_color_histograms
+from features import compute_normal_histograms
+
 from visualization_msgs.msg import Marker
 from sensor_stick.marker_tools import *
 from sensor_stick.msg import DetectedObjectsArray
@@ -31,28 +35,19 @@ def get_normals(cloud):
     return get_normals_prox(cloud).cluster
 
 # Helper function to create a yaml friendly dictionary from ROS messages
-# def make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose):
-#     yaml_dict = {}
-#     yaml_dict["test_scene_num"] = test_scene_num.data
-#     yaml_dict["arm_name"]  = arm_name.data
-#     yaml_dict["object_name"] = object_name.data
-#     yaml_dict["pick_pose"] = message_converter.convert_ros_message_to_dictionary(pick_pose)
-#     yaml_dict["place_pose"] = message_converter.convert_ros_message_to_dictionary(place_pose)
-#     return yaml_dict
-
 def make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose):
     yaml_dict = {}
-    yaml_dict["test_scene_num"] = str(test_scene_num.data)
-    yaml_dict["arm_name"]  = str(arm_name.data)
-    yaml_dict["object_name"] = str(object_name.data)
-    yaml_dict["pick_pose"] = str(message_converter.convert_ros_message_to_dictionary(pick_pose))
-    yaml_dict["place_pose"] = str(message_converter.convert_ros_message_to_dictionary(place_pose))
+    yaml_dict["test_scene_num"] = test_scene_num.data
+    yaml_dict["arm_name"]  = arm_name.data
+    yaml_dict["object_name"] = object_name.data
+    yaml_dict["pick_pose"] = message_converter.convert_ros_message_to_dictionary(pick_pose)
+    yaml_dict["place_pose"] = message_converter.convert_ros_message_to_dictionary(place_pose)
     return yaml_dict
+
 
 # Helper function to output to yaml file
 def send_to_yaml(yaml_filename, dict_list):
     data_dict = {"object_list": dict_list}
-    rospy.loginfo('Dict to yaml: {}'.format(yaml.dump(data_dict)))
     
     with open(yaml_filename, 'w') as outfile:
         yaml.dump(data_dict, outfile, default_flow_style=False)
@@ -214,7 +209,7 @@ def pr2_mover(object_list):
     # TODO: Initialize variables
     dict_list = []
     test_scene_num = Int32()
-    test_scene_num.data = 1
+    test_scene_num.data = int(1)
 
     # TODO: Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
@@ -271,32 +266,32 @@ def pr2_mover(object_list):
         centroid = np.mean(points_arr, axis=0)[:3]
           
         object_name = String()
-        object_name.data = lbl
+        object_name.data = str(lbl)
     
 
         pick_pose = Pose()
-        pick_pose.position.x = centroid[0]
-        pick_pose.position.y = centroid[1]
-        pick_pose.position.z = centroid[2]
+        pick_pose.position.x = float(centroid[0])
+        pick_pose.position.y = float(centroid[1])
+        pick_pose.position.z = float(centroid[2])
         
         # TODO: Assign the arm to be used for pick_place
         arm_name = String()
-        arm_name.data = place_name
+        arm_name.data = str(place_name)
 
         # TODO: Create 'place_pose' for the object
         place_pose = Pose()
-        place_pose.position.x = place_position[0]
-        place_pose.position.y = place_position[1] 
-        place_pose.position.z = place_position[2]
+        place_pose.position.x = float(place_position[0])
+        place_pose.position.y = float(place_position[1]) 
+        place_pose.position.z = float(place_position[2])
 
         rospy.loginfo('Name: {} - Group: {} - Arm name: {}'.format(object_name.data, object_group, arm_name.data))
         # rospy.loginfo('Pick pose: {} - Place pose: {}'.format(pick_pose, place_pose))
 
         # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
         yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
-        rospy.loginfo('Dict: {} '.format(yaml_dict))
+        
         dict_list.append(yaml_dict)
-        rospy.loginfo('Dict list: {} '.format(dict_list))
+        
 
 
         # Wait for 'pick_place_routine' service to come up
